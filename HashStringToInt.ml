@@ -1,19 +1,16 @@
-(*#use "C:\\Users\\Jérémy\\Desktop\\Cours\\projet_lsi\\projet\\interfaces.mli";;*)
-#use "C:\\Users\\arnau\\eclipse-workspace\\ocaml_hashtable\\interfaces.mli";;
+#use "C:\\Users\\Jérémy\\Desktop\\Cours\\projet_lsi\\projet\\interfaces.mli";;
+
+(*#use "C:\\Users\\arnau\\eclipse-workspace\\ocaml_hashtable\\interfaces.mli";;*)
 (*#use "/home/l2info/peralarn/eclipse-workspace/ocaml_hashtable/interfaces.mli";;*)
 
 module HashStringToInt =
 struct
-	
-	module B = BCTree(CoupleHashMap)
-	module C = CoupleHashMap
-	
 	type elem =
-		| Mot of C.valeur
-		| Ensemble of B.arbreRN
+		| Mot of CoupleHashMap.valeur
+		| Ensemble of BCTree.arbreRN
 	
 	type couple =
-		| Couple of C.clef * elem
+		| Couple of CoupleHashMap.clef * elem
 	
 	type couleur =
 		| DoubleNoir
@@ -101,7 +98,7 @@ struct
 					else
 						equilibrer(Noeud(v, c, g , insertionAux xWord xHashed funComp d))
 			| _ -> failwith("Erreur insertion")
-		in colorerRacine Noir(equilibrer(insertionAux word (C.hash word) C.clef_comp arbre))
+		in colorerRacine Noir(equilibrer(insertionAux word (CoupleHashMap.hash word) CoupleHashMap.clef_comp arbre))
 		
 		let rec maxAb = function
   	| Vide -> failwith "Erreur_max"
@@ -168,29 +165,28 @@ struct
 		
 		
 		let ensCheck = function
-    	| Noeud(Couple(yHashed, Ensemble(Noeud(xWord, _, Vide, Vide))), c, g, d) ->  
-						Noeud(Couple(yHashed, Mot(xWord), c, g ,d))
-      | arbre -> arbre
-
-    let suppression arbre word =
-    	let rec suppAux xWord xHashed funCompHash funCompVal = function
-    		| Noeud(Couple(yHashed, Ensemble(yEns)), c, g, d) when funCompHash xHashed yHashed = 0 ->
-    				ensCheck (Noeud(Couple(yHashed, Ensemble(B.suppSimple xWord yEns)), c, g, d))
-    		| Noeud(Couple(yHashed, Mot(yWord)), Rouge, Vide, Vide) when funCompVal xWord yWord = 0 -> Vide
-    		| Noeud(Couple(yHashed, Mot(yWord)), Noir, Vide, Vide) when funCompVal xWord yWord = 0 -> VideNoir
-    		| Noeud(Couple(yHashed, Mot(yWord)), DoubleNoir, Vide, Vide) -> failwith "supp_double_noir"
-    		| Noeud(Couple(yHashed, Mot(yWord)), Noir, g, Vide) when funCompVal xWord yWord = 0 ->
-    				equilibrerSupp (plusPoidNoir g)
-    		| Noeud(Couple(yHashed, Mot(yWord)), _, g, Vide) when funCompVal xWord yWord = 0 -> g
-    		| Noeud(Couple(yHashed, Mot(yWord)), Noir, Vide, d) when funCompVal xWord yWord = 0 ->
-    				equilibrerSupp (plusPoidNoir d)
-    		| Noeud(Couple(yHashed, Mot(yWord)), _, Vide, d) when funCompVal xWord yWord = 0 -> d
-    		| Noeud(Couple(yHashed, Mot(yWord)), c, g, d) when funCompHash xHashed yHashed = -1 ->
-    				equilibrerSupp (Noeud(Couple(yHashed, Mot(yWord)), c, suppAux xWord xHashed funCompHash funCompVal g, d))
-    		| Noeud(Couple(yHashed, Mot(yWord)), c, g, d) when funCompHash xHashed yHashed = 1 ->
-    				equilibrerSupp (Noeud(Couple(yHashed, Mot(yWord)), c, g, suppAux xWord xHashed funCompHash funCompVal d))
-    		| Noeud(Couple(yHashed, Mot(yWord)), c, g, d) when funCompHash xHashed yHashed = 0 ->
-    				equilibrerSupp (Noeud((maxAb ar1), c, (suppMax g), d))
-    		| _ -> Vide
-    	in equilibrerSupp (suppAux word (C.hash word) C.val_comp C.clef_comp arbre)
+			| Noeud(Couple(yHashed, Ensemble(Noeud(xWord,_,Vide,Vide)), c, g, d)) ->  Noeud(Couple(yHashed, Mot(xWord), c, g ,d))
+			| arbre -> arbre
+		
+		let suppression arbre word =
+      let rec suppAux xWord xHashed funCompHash funCompVal = function
+				| Noeud(Couple(yHashed, Ensemble(yEns)), c, g, d)  when funCompHash xHashed yHashed = 0 ->
+					  ensCheck (Noeud(Couple(yHashed, Ensemble(suppSimple xWord yEns), c, g, d)))
+      	| Noeud(Couple(yHashed, Mot(yWord)), Rouge, Vide, Vide)  when funCompVal xWord yWord = 0 -> Vide
+				| Noeud(Couple(yHashed, Mot(yWord)), Noir, Vide, Vide)  when funCompVal xWord yWord = 0 -> VideNoir
+      	| Noeud(Couple(yHashed, Mot(yWord)), DoubleNoir, Vide, Vide) -> failwith "supp_double_noir"
+				| Noeud(Couple(yHashed, Mot(yWord)), Noir, g, Vide)  when funCompVal xWord yWord = 0 ->
+					  equilibrerSupp (plusPoidNoir g)
+				| Noeud(Couple(yHashed, Mot(yWord)), _, g, Vide)  when funCompVal xWord yWord = 0 -> g
+				| Noeud(Couple(yHashed, Mot(yWord)), Noir, Vide, d)  when funCompVal xWord yWord = 0 ->
+					  equilibrerSupp (plusPoidNoir d)
+				| Noeud(Couple(yHashed, Mot(yWord)), _, Vide, d)  when funCompVal xWord yWord = 0 -> d
+				| Noeud(Couple(yHashed, Mot(yWord)), c, g, d)  when funCompHash xHashed yHashed = -1 ->
+					  equilibrerSupp (Noeud(Couple(yHashed, Mot(yWord)), c, suppAux xWord xHashed funCompHash funCompVal g, d))
+				| Noeud(Couple(yHashed, Mot(yWord)), c, g, d)  when funCompHash xHashed yHashed = 1 ->
+					  equilibrerSupp (Noeud(Couple(yHashed, Mot(yWord)), c, g, suppAux xWord xHashed funCompHash funCompVal d))
+				| Noeud(Couple(yHashed, Mot(yWord)), c, g, d)  when funCompHash xHashed yHashed = 0 ->
+					  equilibrerSupp (Noeud((maxAb ar1), c, (suppMax g), d))
+      	| _ -> Vide
+		in equilibrerSupp (suppAux word (CoupleHashMap.hash word) CoupleHashMap.val_comp CoupleHashMap.clef_comp arbre)
 end

@@ -19,6 +19,8 @@ module type BCTree =
     	type element = C.valeur
     	(** Définition du type arbre bicolore. *)
     	type arbreRN
+			(** Teste si l'élément est présent *)
+			val appartientA : ('a * 'a -> int) * 'a * arbreRN -> bool
     	(** Renvoie un arbre bicolore vide. *)
     	val arbreVide : arbreRN
     	(** Insère une valeur de type CoupleHashMap.valeur dans un arbre bicolore. *)
@@ -41,4 +43,12 @@ module type HashStringToInt =
         val suppression : hashStringToInt * string -> hashStringToInt
         (** Teste si la chaîne est présente. *)
         val estDans : hashStringToInt * string -> bool
+				(** Opérateur union *)
+				val hashUnion : hashStringToInt * hashStringToInt -> hashStringToInt
+				(** Opérateur intersection *)
+				val hashInter : hashStringToInt * hashStringToInt -> hashStringToInt
+				(** Opérateur différence *)
+				val hashDiff : hashStringToInt * hashStringToInt -> hashStringToInt
+				(** Opérateur différence symétrique *)
+				val hashDiffSym : hashStringToInt * hashStringToInt -> hashStringToInt
       end

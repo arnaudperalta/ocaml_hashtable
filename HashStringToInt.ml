@@ -1,16 +1,19 @@
-#use "C:\\Users\\Jérémy\\Desktop\\Cours\\projet_lsi\\projet\\interfaces.mli";;
-
+(*#use "C:\\Users\\Jérémy\\Desktop\\Cours\\projet_lsi\\projet\\interfaces.mli";;*)
 (*#use "C:\\Users\\arnau\\eclipse-workspace\\ocaml_hashtable\\interfaces.mli";;*)
-(*#use "/home/l2info/peralarn/eclipse-workspace/ocaml_hashtable/interfaces.mli";;*)
+#use "/home/l2info/peralarn/eclipse-workspace/ocaml_hashtable/interfaces.mli";;
 
 module HashStringToInt =
 struct
+	
+	module C = CoupleHashMap
+	module B = BCTree(C)
+	
 	type elem =
-		| Mot of CoupleHashMap.valeur
-		| Ensemble of BCTree.arbreRN
+		| Mot of C.valeur
+		| Ensemble of BCTree(C).arbreRN
 	
 	type couple =
-		| Couple of CoupleHashMap.clef * elem
+		| Couple of C.clef * elem
 	
 	type couleur =
 		| DoubleNoir
@@ -135,7 +138,7 @@ struct
   			plusPoidNoir (Noeud(vp, pc, colorerRacine Rouge f, moinsPoidNoir x))
   	| Noeud(a, b, ag, ad) -> Noeud(a, b, equ_aux ag, equ_aux ad)
   	| Vide -> Vide
-  	| VideNoir -> VideNoir
+  	| VideNoir -> Vide
 
 
   let equilibrerSupp = function
@@ -165,13 +168,13 @@ struct
 		
 		
 		let ensCheck = function
-			| Noeud(Couple(yHashed, Ensemble(Noeud(xWord,_,Vide,Vide)), c, g, d)) ->  Noeud(Couple(yHashed, Mot(xWord), c, g ,d))
+			| Noeud(Couple(yHashed, Ensemble(Noeud(xWord,_,Vide,Vide))), c, g, d) ->  Noeud(Couple(yHashed, Mot(xWord)), c, g ,d)
 			| arbre -> arbre
 		
 		let suppression arbre word =
       let rec suppAux xWord xHashed funCompHash funCompVal = function
 				| Noeud(Couple(yHashed, Ensemble(yEns)), c, g, d)  when funCompHash xHashed yHashed = 0 ->
-					  ensCheck (Noeud(Couple(yHashed, Ensemble(suppSimple xWord yEns), c, g, d)))
+					  ensCheck (Noeud(Couple(yHashed, Ensemble(B.suppSimple xWord yEns)), c, g, d))
       	| Noeud(Couple(yHashed, Mot(yWord)), Rouge, Vide, Vide)  when funCompVal xWord yWord = 0 -> Vide
 				| Noeud(Couple(yHashed, Mot(yWord)), Noir, Vide, Vide)  when funCompVal xWord yWord = 0 -> VideNoir
       	| Noeud(Couple(yHashed, Mot(yWord)), DoubleNoir, Vide, Vide) -> failwith "supp_double_noir"
@@ -186,7 +189,48 @@ struct
 				| Noeud(Couple(yHashed, Mot(yWord)), c, g, d)  when funCompHash xHashed yHashed = 1 ->
 					  equilibrerSupp (Noeud(Couple(yHashed, Mot(yWord)), c, g, suppAux xWord xHashed funCompHash funCompVal d))
 				| Noeud(Couple(yHashed, Mot(yWord)), c, g, d)  when funCompHash xHashed yHashed = 0 ->
-					  equilibrerSupp (Noeud((maxAb ar1), c, (suppMax g), d))
+					  equilibrerSupp (Noeud((maxAb g), c, (suppMax g), d))
       	| _ -> Vide
-		in equilibrerSupp (suppAux word (CoupleHashMap.hash word) CoupleHashMap.val_comp CoupleHashMap.clef_comp arbre)
+		in equilibrerSupp (suppAux word (C.hash word) C.val_comp C.clef_comp arbre)
+		
+	let rec estDans arbre word =
+		match arbre with
+		| Noeud(Couple(_, Mot(word2)), _, _, _) when C.val_comp word word2 = 0 -> true
+		| Noeud(Couple(hash, Ensemble(x)), _, _, _) when (C.clef_comp hash (C.hash word)) = 0 ->
+			B.appartientA (C.val_comp) word x
+		| Noeud(Couple(hash, _), _, ag, _) when (C.clef_comp hash (C.hash word)) > 0 -> estDans ag word
+		| Noeud(Couple(hash, _), _, _, ad) when (C.clef_comp hash (C.hash word)) < 0 -> estDans ad word
+		| _ -> false
+
+	let hashUnion a1 a2 =
+		let rec parcours a1 = function
+			| Vide | VideNoir -> a1
+			| Noeud(Couple(_, Mot(x)), _, _, _) as abAux -> parcours (insertion a1 x) (suppression abAux x)
+			| Noeud(Couple(_, Ensemble(Noeud(x, _, _, _))), _, _, _) as abAux -> parcours (insertion a1 x) (suppression abAux x)
+			| _ -> failwith("erreur Union")
+			in parcours a1 a2
+			
+	let hashInter a1 a2 =
+		let rec remplir a a1 = function
+			| Vide | VideNoir -> a
+			| Noeud(Couple(_, Mot(x)), _, _, _) as abAux when estDans a1 x -> remplir (insertion a x) a1 (suppression abAux x)
+			| Noeud(Couple(_, Mot(x)), _, _, _) as abAux -> remplir a a1 (suppression abAux x)
+			| Noeud(Couple(_, Ensemble(Noeud(x, _, _, _))), _, _, _) as abAux when estDans a1 x -> remplir (insertion a x) a1 (suppression abAux x)
+			| Noeud(Couple(_, Ensemble(Noeud(x, _, _, _))), _, _, _) as abAux -> remplir a a1 (suppression abAux x)
+			| _ -> failwith("erreur  Inter")
+			in remplir mapVide a1 a2
+			
+	let hashDiff a1 a2 =
+		let rec parcours a1 = function
+			| Vide | VideNoir -> a1
+			| Noeud(Couple(_, Mot(x)), _, _, _) as abAux when estDans a1 x -> parcours (suppression a1 x) (suppression abAux x)
+			| Noeud(Couple(_, Mot(x)), _, _ ,_) as abAux-> parcours a1 (suppression abAux x)
+			| Noeud(Couple(_, Ensemble(Noeud(x, _, _, _))), _, _, _) as abAux when estDans a1 x -> parcours (suppression a1 x) (suppression abAux x)
+			| Noeud(Couple(_, Ensemble(Noeud(x, _, _, _))), _, _, _) as abAux -> parcours a1 (suppression abAux x)
+			| _ -> failwith("erreur Diff")
+			in parcours a1 a2
+			
+	let hashDiffSym a1 = function
+		| Vide | VideNoir -> a1
+		| a2 -> hashUnion (hashDiff a1 a2) (hashDiff a2 a1)
 end

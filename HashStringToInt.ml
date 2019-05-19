@@ -1,10 +1,5 @@
-(*#use "C:\\Users\\Jérémy\\Desktop\\Cours\\projet_lsi\\projet\\interfaces.mli";;*)
-(*#use "C:\\Users\\arnau\\eclipse-workspace\\ocaml_hashtable\\interfaces.mli";;*)
-#use "/home/l2info/peralarn/eclipse-workspace/ocaml_hashtable/interfaces.mli";;
-
 module HashStringToInt =
 struct
-	
 	module C = CoupleHashMap
 	module B = BCTree(C)
 	
@@ -168,7 +163,7 @@ struct
 		
 		
 		let ensCheck = function
-			| Noeud(Couple(yHashed, Ensemble(Noeud(xWord,_,Vide,Vide))), c, g, d) ->  Noeud(Couple(yHashed, Mot(xWord)), c, g ,d)
+			| Noeud(Couple(yHashed, Ensemble(x)), c, g, d) when B.pasDeFils x -> Noeud(Couple(yHashed, Mot(B.valeurTop x)), c, g, d)
 			| arbre -> arbre
 		
 		let suppression arbre word =
@@ -206,7 +201,7 @@ struct
 		let rec parcours a1 = function
 			| Vide | VideNoir -> a1
 			| Noeud(Couple(_, Mot(x)), _, _, _) as abAux -> parcours (insertion a1 x) (suppression abAux x)
-			| Noeud(Couple(_, Ensemble(Noeud(x, _, _, _))), _, _, _) as abAux -> parcours (insertion a1 x) (suppression abAux x)
+			| Noeud(Couple(_, Ensemble(x)), _, _, _) as abAux -> parcours (insertion a1 (B.valeurTop x)) (suppression abAux (B.valeurTop x))
 			| _ -> failwith("erreur Union")
 			in parcours a1 a2
 			
@@ -215,8 +210,9 @@ struct
 			| Vide | VideNoir -> a
 			| Noeud(Couple(_, Mot(x)), _, _, _) as abAux when estDans a1 x -> remplir (insertion a x) a1 (suppression abAux x)
 			| Noeud(Couple(_, Mot(x)), _, _, _) as abAux -> remplir a a1 (suppression abAux x)
-			| Noeud(Couple(_, Ensemble(Noeud(x, _, _, _))), _, _, _) as abAux when estDans a1 x -> remplir (insertion a x) a1 (suppression abAux x)
-			| Noeud(Couple(_, Ensemble(Noeud(x, _, _, _))), _, _, _) as abAux -> remplir a a1 (suppression abAux x)
+			| Noeud(Couple(_, Ensemble(x)), _, _, _) as abAux when estDans a1 (B.valeurTop x) -> 
+				remplir (insertion a (B.valeurTop x)) a1 (suppression abAux (B.valeurTop x))
+			| Noeud(Couple(_, Ensemble(x)), _, _, _) as abAux -> remplir a a1 (suppression abAux (B.valeurTop x))
 			| _ -> failwith("erreur  Inter")
 			in remplir mapVide a1 a2
 			
@@ -225,12 +221,17 @@ struct
 			| Vide | VideNoir -> a1
 			| Noeud(Couple(_, Mot(x)), _, _, _) as abAux when estDans a1 x -> parcours (suppression a1 x) (suppression abAux x)
 			| Noeud(Couple(_, Mot(x)), _, _ ,_) as abAux-> parcours a1 (suppression abAux x)
-			| Noeud(Couple(_, Ensemble(Noeud(x, _, _, _))), _, _, _) as abAux when estDans a1 x -> parcours (suppression a1 x) (suppression abAux x)
-			| Noeud(Couple(_, Ensemble(Noeud(x, _, _, _))), _, _, _) as abAux -> parcours a1 (suppression abAux x)
+			| Noeud(Couple(_, Ensemble(x)), _, _, _) as abAux when estDans a1 (B.valeurTop x) -> parcours (suppression a1 (B.valeurTop x)) (suppression abAux (B.valeurTop x))
+			| Noeud(Couple(_, Ensemble(x)), _, _, _) as abAux -> parcours a1 (suppression abAux (B.valeurTop x))
 			| _ -> failwith("erreur Diff")
 			in parcours a1 a2
 			
 	let hashDiffSym a1 = function
 		| Vide | VideNoir -> a1
 		| a2 -> hashUnion (hashDiff a1 a2) (hashDiff a2 a1)
+
+	let rec hashFold f a = function
+		| Vide | VideNoir -> a
+		| Noeud(Couple(_, Mot(x)), _, _, _) as y -> hashFold f (f a  x) (suppression y x)
+		| Noeud(Couple(_, Ensemble(x)), _, _, _) as y -> hashFold f (f a (B.valeurTop x)) (suppression y (B.valeurTop x))
 end

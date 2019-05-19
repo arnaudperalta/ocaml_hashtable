@@ -21,6 +21,10 @@ module type BCTree =
     	type arbreRN
 			(** Teste si l'élément est présent *)
 			val appartientA : ('a * 'a -> int) * 'a * arbreRN -> bool
+			(** Teste si l'arbre n'a pas de fils *)
+			val pasDeFils : arbreRN -> bool
+			(** Renvoie la première valeur de l'arbre *)
+			val valeurTop : arbreRN -> element
     	(** Renvoie un arbre bicolore vide. *)
     	val arbreVide : arbreRN
     	(** Insère une valeur de type CoupleHashMap.valeur dans un arbre bicolore. *)
@@ -38,11 +42,11 @@ module type HashStringToInt =
         (** Renvoie une table vide. *)
         val mapVide : hashStringToInt
         (** Insère une chaîne dans la table. *)
-        val insertion : hashStringToInt * string -> hashStringToInt
+        val insertion : hashStringToInt * C.valeur -> hashStringToInt
         (** Supprime une chaîne dans la table. *)
-        val suppression : hashStringToInt * string -> hashStringToInt
+        val suppression : hashStringToInt * C.valeur -> hashStringToInt
         (** Teste si la chaîne est présente. *)
-        val estDans : hashStringToInt * string -> bool
+        val estDans : hashStringToInt * C.valeur -> bool
 				(** Opérateur union *)
 				val hashUnion : hashStringToInt * hashStringToInt -> hashStringToInt
 				(** Opérateur intersection *)
@@ -51,4 +55,6 @@ module type HashStringToInt =
 				val hashDiff : hashStringToInt * hashStringToInt -> hashStringToInt
 				(** Opérateur différence symétrique *)
 				val hashDiffSym : hashStringToInt * hashStringToInt -> hashStringToInt
+				(** Opérateur d'accumulationen *)
+			  val hashFold : ('a -> 'b -> 'a) -> 'a -> hashStringToInt -> 'a
       end

@@ -1,8 +1,3 @@
-(*#use "C:\\Users\\Jérémy\\Desktop\\Cours\\projet_lsi\\projet\\interfaces.mli";;*)
-(* #use                                                                    *)
-(* "C:\\Users\\arnau\\eclipse-workspace\\ocaml_hashtable\\interfaces.mli";; *)
-#use "/home/l2info/peralarn/eclipse-workspace/ocaml_hashtable/interfaces.mli";;
-
 module BCTree (C : CoupleHashMap) =
 struct
   
@@ -47,6 +42,14 @@ struct
   	| Noeud(_, _, _, Noeud(_, Rouge, _, _)) -> true
   	| _ -> false
 
+	let pasDeFils = function
+		| Noeud(_, _, Vide, Vide) -> true
+		| _ -> false
+
+	let valeurTop = function
+		| Vide | VideNoir -> failwith("erreur valeur")
+		| Noeud(x, _, _, _) -> x
+			
   let rotationGauche = function
   	| Vide -> Vide
   	| VideNoir -> VideNoir

@@ -1,3 +1,5 @@
+Projet de licence 2, implémentation d'une structure de table de hashage en Ocaml
+
 # Interface :
 ## Module CoupleHashMap :
 ```ocaml
